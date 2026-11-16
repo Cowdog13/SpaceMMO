@@ -240,7 +240,7 @@ func _draw_arcs() -> void:
 		if not tgt.is_empty():
 			in_it = Hex.distance(e.hex, tgt.hex) <= int(act.range) and Hex.in_arc(e.hex, e.facing, p.get("dir", 0.0), p.get("arc", 360.0), tgt.hex)
 		var col: Color = act.get("color", Color.WHITE)
-		col.a = 0.16 if in_it else 0.05
+		col.a = 0.18 if in_it else 0.07
 		var pts := PackedVector2Array([e.pos])
 		for i in 25:
 			var a := center - half + 2.0 * half * i / 24.0
@@ -320,16 +320,16 @@ func _draw_fx(z: float) -> void:
 		var k: float = 1.0 - f.age / life
 		match f.k:
 			"beam", "rail":
-				var a := _ent_pos(f.a)
-				var b := _ent_pos(f.b)
+				var a = _ent_pos(f.a)
+				var b = _ent_pos(f.b)
 				if a != null and b != null:
 					var c: Color = f.get("c", Color.WHITE)
 					c.a = k
 					draw_line(a, b, c, (5.0 if f.k == "rail" else 2.5) * w * (0.5 + k))
 					draw_line(a, b, Color(1, 1, 1, k), 1.0 * w)
 			"missile":
-				var a := _ent_pos(f.a)
-				var b := _ent_pos(f.b)
+				var a = _ent_pos(f.a)
+				var b = _ent_pos(f.b)
 				if a != null and b != null:
 					var t := clampf(f.age / (f.t / float(World.TICK_RATE)), 0, 1)
 					var p: Vector2 = a.lerp(b, t)
@@ -343,7 +343,7 @@ func _draw_fx(z: float) -> void:
 				_label(p + Vector2(0, -Hex.SIZE - 20 * f.age / z - 8 / z), str(f.v), col, 16, z)
 			"boom":
 				var p := Hex.to_pixel(f.p)
-				var r := Hex.SIZE * (0.5 + f.age * (3.0 if f.get("big", true) else 1.5))
+				var r: float = Hex.SIZE * (0.5 + f.age * (3.0 if f.get("big", true) else 1.5))
 				draw_circle(p, r, Color(1, 0.6, 0.2, k * 0.5))
 				draw_arc(p, r * 1.2, 0, TAU, 32, Color(1, 0.9, 0.5, k), 3 * w)
 			"bump":

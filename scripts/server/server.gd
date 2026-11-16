@@ -302,7 +302,14 @@ func _chat_command(e: Entity, text: String) -> void:
 		return
 	match parts[0]:
 		"/tp":
-			if parts.size() >= 3 and e.in_space:
+			if parts.size() == 2 and not World.get_planet(parts[1]).is_empty():
+				if e.in_space:
+					_despawn_drones(e)
+					_remove_entity(e)
+				e.account.docked_at = parts[1]
+				_send_docked(e)
+				_send_player(e)
+			elif parts.size() >= 3 and e.in_space:
 				occupancy.erase(e.hex)
 				entities.erase(e.id)
 				_despawn_drones(e)
@@ -318,7 +325,7 @@ func _chat_command(e: Entity, text: String) -> void:
 		"/xp":
 			_give_xp(e, int(parts[1]) if parts.size() > 1 else 1000)
 		_:
-			_notice(e, "Dev commands: /tp q r, /give item [qty], /credits n, /xp n", "error")
+			_notice(e, "Dev commands: /tp q r | /tp planet, /give item [qty], /credits n, /xp n", "error")
 
 
 func _notice(e: Entity, text: String, kind := "info") -> void:
@@ -496,6 +503,7 @@ func _cmd_equip(e: Entity, item_id: String, port_id: String) -> void:
 		_notice(e, "Requires level %d." % Items.get_item(item_id).level, "error")
 		return
 	if not e.cargo_remove(item_id, 1):
+		_notice(e, "You don't have that item.", "error")
 		return
 	if e.equipped.has(port_id):
 		e.cargo_add(e.equipped[port_id], 1) # always room: we just freed a unit
@@ -735,7 +743,20 @@ func _blocked_for(e: Entity, h: Vector2i, avoid_units: bool) -> bool:
 # Simulation tick
 # =====================================================================
 
+var _tick_usec_total := 0
+
+
 func _tick() -> void:
+	var t0 := Time.get_ticks_usec()
+	_tick_inner()
+	_tick_usec_total += Time.get_ticks_usec() - t0
+	if tick % (60 * World.TICK_RATE) == 0:
+		print("[server] players %d, units in space %d, loot %d, avg tick %.2f ms (budget %.0f ms)" % [
+			sessions.size(), entities.size(), loot.size(), _tick_usec_total / 1000.0 / (60 * World.TICK_RATE), 1000.0 / World.TICK_RATE])
+		_tick_usec_total = 0
+
+
+func _tick_inner() -> void:
 	tick += 1
 	fx.clear()
 	world.update(world_time())

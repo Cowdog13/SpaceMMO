@@ -54,6 +54,65 @@ func _ready() -> void:
 	multiplayer.connected_to_server.connect(_on_connected)
 	multiplayer.connection_failed.connect(_on_connection_failed)
 	multiplayer.server_disconnected.connect(_on_server_disconnected)
+	_dev_args()
+
+
+## Testing helpers:  -- --autologin NAME PASS [--host H] [--shot out.png SECONDS] [--chat "/tp 0 -100"]
+func _dev_args() -> void:
+	var a := OS.get_cmdline_user_args()
+	var host := "127.0.0.1"
+	var i := a.find("--host")
+	if i >= 0:
+		host = a[i + 1]
+	i = a.find("--autologin")
+	if i >= 0:
+		connect_to(host, Net.DEFAULT_PORT, a[i + 1], a[i + 2])
+	i = a.find("--shot")
+	if i >= 0:
+		var path: String = a[i + 1]
+		var secs := float(a[i + 2])
+		get_tree().create_timer(secs).timeout.connect(func():
+			get_viewport().get_texture().get_image().save_png(path)
+			print("[client] screenshot saved ", path)
+			get_tree().quit())
+	i = a.find("--chat")
+	if i >= 0:
+		var text: String = a[i + 1]
+		get_tree().create_timer(2.0).timeout.connect(func(): cmd("chat", {"text": text}))
+	i = a.find("--do")
+	if i >= 0:
+		# comma separated: undock,target,zoom
+		var steps: PackedStringArray = a[i + 1].split(",")
+		var t := 2.5
+		for st in steps:
+			var step := st
+			get_tree().create_timer(t).timeout.connect(func(): _dev_step(step))
+			t += 1.0
+
+
+func _dev_step(step: String) -> void:
+	if step.begins_with("chat:"):
+		cmd("chat", {"text": step.substr(5)})
+		return
+	if step.begins_with("wait"):
+		return
+	match step:
+		"undock": cmd("undock")
+		"dock": cmd("dock")
+		"target": target_nearest()
+		"fire": activate_slot(0)
+		"map": ui.toggle_map()
+		"help": ui.toggle_help()
+		"zoomout": view.zoom_by(0.5)
+		"zoomin": view.zoom_by(1.6)
+		"move":
+			var h := my_hex() + Vector2i(3, 0)
+			order_move(h)
+		"approach":
+			if ents.has(target_id):
+				order_move(ents[target_id].hex)
+		"autofire":
+			cmd("auto", {"port": "front", "on": true})
 
 
 func local_secs() -> float:
