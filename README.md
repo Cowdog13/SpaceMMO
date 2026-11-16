@@ -49,6 +49,23 @@ For a home PC, forward **UDP** 7777 on your router to that machine.
 You can also export a headless build: Project → Export → Linux, with the export mode
 "Dedicated Server", then run `./SpaceMMO.x86_64 --headless -- --server`.
 
+## Building the game for friends
+
+`export_presets.cfg` has **Windows** and **Linux** presets. Each one builds a single self-contained
+executable with the game data embedded. Install the Godot 4.3 export templates (Editor → Manage
+Export Templates) and use Project → Export, or build from the command line:
+
+```bash
+godot --headless --path . --export-release "Windows" export/windows/SpaceMMO.exe
+```
+
+```bash
+godot --headless --path . --export-release "Linux" export/linux/SpaceMMO.x86_64
+```
+
+The Windows build also creates `SpaceMMO.console.exe`. Use it to run a server in a console window
+with visible logs: `SpaceMMO.console.exe --headless -- --server`.
+
 ## Controls
 
 | Input | Action |
